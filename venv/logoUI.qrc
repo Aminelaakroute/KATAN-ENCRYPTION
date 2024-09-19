@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="newPrefix">
+    <file>key.png</file>
+    <file>lock.png</file>
+    <file>unlocked.png</file>
+  </qresource>
+</RCC>
