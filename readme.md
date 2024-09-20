@@ -1,10 +1,10 @@
 # KATAN Encryption Project
 
-This project implements the KATAN (K-Ary Tree Adding Network) block cipher with a graphical user interface using PyQt5.
+This project implements the KATAN (K-bit Algorithmic Trust and Authentication Network) block cipher with a graphical user interface using PyQt5.
 
 ## Description
 
-KATAN is a lightweight block cipher designed for resource-constrained devices. This implementation supports three variants of KATAN: KATAN32, KATAN48, and KATAN64, which operate on 32-bit, 48-bit, and 64-bit blocks respectively.
+KATAN is a lightweight block cipher designed for resource-constrained devices such as RFID tags and sensor networks. This implementation supports three variants of KATAN: KATAN32, KATAN48, and KATAN64, which operate on 32-bit, 48-bit, and 64-bit blocks respectively. All variants use an 80-bit key.
 
 The project consists of two main components:
 1. A KATAN cipher implementation (`katan.py`)
@@ -52,6 +52,7 @@ In the GUI:
 ## Implementation Details
 
 - The KATAN class in `katan.py` implements the core encryption and decryption algorithms
+- The cipher uses two nonlinear feedback shift registers for its operations
 - The GUI in `main.py` provides a user-friendly interface for interacting with the KATAN implementation
 - Input validation ensures that the entered values are within the correct range for the selected KATAN variant
 
@@ -65,4 +66,4 @@ Contributions to improve the project are welcome. Please feel free to submit iss
 
 ## Acknowledgments
 
-- The KATAN cipher was designed by Christophe De Cannière, Orr Dunkelman, and Miroslav Knežević
+- The KATAN cipher was designed by Christophe De Cannière, Orr Dunkelman, and Miroslav Knežević in 2009
