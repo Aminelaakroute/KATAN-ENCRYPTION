@@ -43,11 +43,25 @@ python main.py
 ```
 
 In the GUI:
-1. Select the KATAN variant (32, 48, or 64 bits)
-2. Enter the plaintext or ciphertext in hexadecimal format
-3. Enter the 80-bit key in hexadecimal format
+
+Encryption for plain text
+1. Enter the plaintext or ciphertext in hexadecimal format
+2. Enter the 80-bit key in hexadecimal format
+3. Select the KATAN variant (32, 48, or 64 bits)
 4. Click "Encrypt" or "Decrypt" as needed
 5. The result will be displayed in the output field
+
+if you want to use decryption keep the same key and the same variant to find the clear text
+
+Encryption for plain text in file
+
+1. upload the file containing the plain text to be encrypted.
+2. Enter the 80-bit key in hexadecimal format (e.g., 0xFFFFFFFFFFFFFFFFFFFF).
+3. Select the KATAN variant you want to use (32, 48, or 64-bit block size).
+4. Click "Encrypt file" or "Decrypt file" as needed
+5. The result will be displayed in the output field
+
+if you want to use a file decryption keep the same key and the same variant to find the clear text
 
 ## Implementation Details
 

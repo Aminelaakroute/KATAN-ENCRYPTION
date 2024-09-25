@@ -1,6 +1,7 @@
 import sys
+import os
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5.QtWidgets import QMainWindow, QApplication , QFileDialog
 from PyQt5.QtWidgets import QMainWindow, QMessageBox
 
 
@@ -13,11 +14,17 @@ class MainWindow(QMainWindow):
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.selected_file_path = ""
 
         # Connectez les boutons aux fonctions
         self.ui.crypter_button.clicked.connect(self.encrypt)
         self.ui.decrypter_button.clicked.connect(self.decrypt)
 
+        self.ui.file_browse_button.clicked.connect(self.select_file)
+        self.ui.crypterfile_button.clicked.connect(self.encrypt_file)
+        self.ui.decrypterfile_button.clicked.connect(self.decrypt_file)
+
+        self.ui.encryptdecrypt_file.setPlaceholderText("Veuillez sélectionner un fichier")
         self.ui.plaintext_input.setPlaceholderText("Entrer le text en claire (en hexadécimal) et respecter le nombre des bits de la variante KATAN choisie")
         self.ui.clef_input.setPlaceholderText("Clef de Sécurité 80 Bits exp: 0x+20 caractères ")
 
@@ -123,6 +130,93 @@ class MainWindow(QMainWindow):
 
         except ValueError as e:
             QMessageBox.critical(self, "Erreur", "Entrée invalide. Assurez-vous d'entrer des valeurs hexadécimales valides.")
+
+    def select_file(self):
+        file_dialog = QFileDialog()
+        file_dialog.setNameFilter("Tous les fichiers (*)")
+        if file_dialog.exec_():
+            selected_files = file_dialog.selectedFiles()
+            if selected_files:
+                self.selected_file_path = selected_files[0]
+                self.ui.encryptdecrypt_file.setText(self.selected_file_path)
+    def encrypt_file(self):
+        try:
+            if not self.selected_file_path:
+                self.show_warning("Veuillez sélectionner un fichier.")
+                return
+
+            variant = self.get_variant()
+            if variant is None:
+                self.show_radio_warning("Aucun variant sélectionné. Veuillez choisir une base (32, 48 ou 64).")
+                return
+
+            # Lire le fichier et convertir le contenu en entier (texte en clair)
+            with open(self.selected_file_path, "rb") as input_file:
+                plaintext = int.from_bytes(input_file.read(), byteorder='big')
+
+            # Vérifier si le texte dépasse la taille maximale autorisée pour la variante choisie
+            max_value = (1 << variant) - 1
+            if plaintext > max_value:
+                self.show_input_warning(variant, plaintext)
+                return
+
+            clef_text = self.ui.clef_input.text().strip()
+            if not clef_text:
+                self.show_warning("Veuillez saisir une clé de sécurité.")
+                return
+
+            key = int(clef_text, 16)
+
+            katan = KATAN(key, variant)
+            ciphertext = katan.encrypt_file(self.selected_file_path)
+
+            output_file_path = os.path.splitext(self.selected_file_path)[0] + "_encrypted.txt"
+            with open(output_file_path, "wb") as output_file:
+                output_file.write(ciphertext)
+
+            self.ui.result_output.setPlainText(f"Fichier chiffré enregistré sous : {output_file_path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur", f"Une erreur est survenue lors du chiffrement : {str(e)}")
+
+    def decrypt_file(self):
+        try:
+            if not self.selected_file_path:
+                self.show_warning("Veuillez sélectionner un fichier.")
+                return
+
+            variant = self.get_variant()
+            if variant is None:
+                self.show_radio_warning("Aucun variant sélectionné. Veuillez choisir une base (32, 48 ou 64).")
+                return
+
+            clef_text = self.ui.clef_input.text().strip()
+            if not clef_text:
+                self.show_warning("Veuillez saisir une clé de sécurité.")
+                return
+
+            # Lire le fichier et convertir le contenu en entier (texte en clair)
+            with open(self.selected_file_path, "rb") as input_file:
+                plaintext = int.from_bytes(input_file.read(), byteorder='big')
+
+            # Vérifier si le texte dépasse la taille maximale autorisée pour la variante choisie
+            max_value = (1 << variant) - 1
+            if plaintext > max_value:
+                self.show_input_warning(variant, plaintext)
+                return
+
+            key = int(clef_text, 16)
+
+            katan = KATAN(key, variant)
+            plaintext = katan.decrypt_file(self.selected_file_path)
+
+            output_file_path = os.path.splitext(self.selected_file_path)[0] + "_decrypted.txt"
+            with open(output_file_path, "wb") as output_file:
+                output_file.write(plaintext)
+
+            self.ui.result_output.setPlainText(f"Fichier déchiffré enregistré sous : {output_file_path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur", f"Une erreur est survenue lors du déchiffrement : {str(e)}")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="newPrefix">
+    <file>upload.svg</file>
     <file>key.png</file>
     <file>lock.png</file>
     <file>unlocked.png</file>
