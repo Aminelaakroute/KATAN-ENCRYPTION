@@ -74,7 +74,7 @@ class KATAN:
             result ^= x >> positions[5]
         return result & 1
 
-    def encrypt_file(self, file_path):
+    def encrypt_file1(self, file_path):
         try:
             with open(file_path, 'rb') as input_file:
                 plaintext = int.from_bytes(input_file.read(), byteorder='big')
@@ -85,13 +85,63 @@ class KATAN:
         except Exception as e:
             raise Exception(f"Erreur lors du chiffrement du fichier : {str(e)}")
 
-    def decrypt_file(self, file_path):
+    def decrypt_file1(self, file_path):
         try:
             with open(file_path, 'rb') as input_file:
                 ciphertext = int.from_bytes(input_file.read(), byteorder='big')
 
             plaintext = self.decrypt(ciphertext)
             return plaintext.to_bytes((plaintext.bit_length() + 7) // 8, byteorder='big')
+
+        except Exception as e:
+            raise Exception(f"Erreur lors du déchiffrement du fichier : {str(e)}")
+
+    def encrypt_file(self, file_path):
+        try:
+            with open(file_path, 'rb') as input_file:
+                plaintext = input_file.read()
+
+            # Convertir les bytes en une liste d'entiers (chaque entier représentant un bloc)
+            block_size = self.block_size // 8  # Taille du bloc en octets
+            blocks = [int.from_bytes(plaintext[i:i + block_size], byteorder='big')
+                      for i in range(0, len(plaintext), block_size)]
+
+            # Padding du dernier bloc si nécessaire
+            if len(blocks[-1].to_bytes(block_size, byteorder='big')) < block_size:
+                blocks[-1] = int.from_bytes(blocks[-1].to_bytes(block_size, byteorder='big').ljust(block_size, b'\0'),
+                                            byteorder='big')
+
+            # Chiffrer chaque bloc
+            encrypted_blocks = [self.encrypt(block) for block in blocks]
+
+            # Convertir les blocs chiffrés en bytes
+            ciphertext = b''.join(block.to_bytes(block_size, byteorder='big') for block in encrypted_blocks)
+
+            return ciphertext
+
+        except Exception as e:
+            raise Exception(f"Erreur lors du chiffrement du fichier : {str(e)}")
+
+    def decrypt_file(self, file_path):
+        try:
+            with open(file_path, 'rb') as input_file:
+                ciphertext = input_file.read()
+
+            # Convertir les bytes en une liste d'entiers (chaque entier représentant un bloc)
+            block_size = self.block_size // 8  # Taille du bloc en octets
+            blocks = [int.from_bytes(ciphertext[i:i + block_size], byteorder='big')
+                      for i in range(0, len(ciphertext), block_size)]
+
+            # Déchiffrer chaque bloc
+            decrypted_blocks = [self.decrypt(block) for block in blocks]
+
+            # Convertir les blocs déchiffrés en bytes
+            plaintext = b''.join(block.to_bytes(block_size, byteorder='big') for block in decrypted_blocks)
+
+            # Supprimer le padding
+            plaintext = plaintext.rstrip(b'\0')
+
+            return plaintext
 
         except Exception as e:
             raise Exception(f"Erreur lors du déchiffrement du fichier : {str(e)}")

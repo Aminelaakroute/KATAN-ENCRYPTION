@@ -139,7 +139,7 @@ class MainWindow(QMainWindow):
             if selected_files:
                 self.selected_file_path = selected_files[0]
                 self.ui.encryptdecrypt_file.setText(self.selected_file_path)
-    def encrypt_file(self):
+    def encrypt_file1(self):
         try:
             if not self.selected_file_path:
                 self.show_warning("Veuillez sélectionner un fichier.")
@@ -178,7 +178,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Erreur", f"Une erreur est survenue lors du chiffrement : {str(e)}")
 
-    def decrypt_file(self):
+    def decrypt_file1(self):
         try:
             if not self.selected_file_path:
                 self.show_warning("Veuillez sélectionner un fichier.")
@@ -210,6 +210,128 @@ class MainWindow(QMainWindow):
             plaintext = katan.decrypt_file(self.selected_file_path)
 
             output_file_path = os.path.splitext(self.selected_file_path)[0] + "_decrypted.txt"
+            with open(output_file_path, "wb") as output_file:
+                output_file.write(plaintext)
+
+            self.ui.result_output.setPlainText(f"Fichier déchiffré enregistré sous : {output_file_path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur", f"Une erreur est survenue lors du déchiffrement : {str(e)}")
+
+        def encrypt_file(self):
+            try:
+                if not self.selected_file_path:
+                    self.show_warning("Veuillez sélectionner un fichier.")
+                    return
+
+                variant = self.get_variant()
+                if variant is None:
+                    self.show_radio_warning("Aucun variant sélectionné. Veuillez choisir une base (32, 48 ou 64).")
+                    return
+
+                clef_text = self.ui.clef_input.text().strip()
+                if not clef_text:
+                    self.show_warning("Veuillez saisir une clé de sécurité.")
+                    return
+
+                key = int(clef_text, 16)
+
+                katan = KATAN(key, variant)
+                ciphertext = katan.encrypt_file(self.selected_file_path)
+
+                output_file_path = self.selected_file_path + ".encrypted"
+                with open(output_file_path, "wb") as output_file:
+                    output_file.write(ciphertext)
+
+                self.ui.result_output.setPlainText(f"Fichier chiffré enregistré sous : {output_file_path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Erreur", f"Une erreur est survenue lors du chiffrement : {str(e)}")
+
+        def decrypt_file(self):
+            try:
+                if not self.selected_file_path:
+                    self.show_warning("Veuillez sélectionner un fichier.")
+                    return
+
+                variant = self.get_variant()
+                if variant is None:
+                    self.show_radio_warning("Aucun variant sélectionné. Veuillez choisir une base (32, 48 ou 64).")
+                    return
+
+                clef_text = self.ui.clef_input.text().strip()
+                if not clef_text:
+                    self.show_warning("Veuillez saisir une clé de sécurité.")
+                    return
+
+                key = int(clef_text, 16)
+
+                katan = KATAN(key, variant)
+                plaintext = katan.decrypt_file(self.selected_file_path)
+
+                output_file_path = self.selected_file_path.rsplit('.', 1)[0]
+                if output_file_path.endswith('.encrypted'):
+                    output_file_path = output_file_path[:-10]
+
+                with open(output_file_path, "wb") as output_file:
+                    output_file.write(plaintext)
+
+                self.ui.result_output.setPlainText(f"Fichier déchiffré enregistré sous : {output_file_path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Erreur", f"Une erreur est survenue lors du déchiffrement : {str(e)}")
+
+    def encrypt_file(self):
+        try:
+            if not self.selected_file_path:
+                self.show_warning("Veuillez sélectionner un fichier.")
+                return
+
+            variant = self.get_variant()
+            if variant is None:
+                self.show_radio_warning("Aucun variant sélectionné. Veuillez choisir une base (32, 48 ou 64).")
+                return
+
+            clef_text = self.ui.clef_input.text().strip()
+            if not clef_text:
+                self.show_warning("Veuillez saisir une clé de sécurité.")
+                return
+
+            key = int(clef_text, 16)
+
+            katan = KATAN(key, variant)
+            ciphertext = katan.encrypt_file(self.selected_file_path)
+
+            output_file_path = self.selected_file_path + ".encrypted"
+            with open(output_file_path, "wb") as output_file:
+                output_file.write(ciphertext)
+
+            self.ui.result_output.setPlainText(f"Fichier chiffré enregistré sous : {output_file_path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur", f"Une erreur est survenue lors du chiffrement : {str(e)}")
+
+    def decrypt_file(self):
+        try:
+            if not self.selected_file_path:
+                self.show_warning("Veuillez sélectionner un fichier.")
+                return
+
+            variant = self.get_variant()
+            if variant is None:
+                self.show_radio_warning("Aucun variant sélectionné. Veuillez choisir une base (32, 48 ou 64).")
+                return
+
+            clef_text = self.ui.clef_input.text().strip()
+            if not clef_text:
+                self.show_warning("Veuillez saisir une clé de sécurité.")
+                return
+
+            key = int(clef_text, 16)
+
+            katan = KATAN(key, variant)
+            plaintext = katan.decrypt_file(self.selected_file_path)
+
+            output_file_path = self.selected_file_path.rsplit('.txt', 1)[0]
+            if output_file_path.endswith('.encrypted'):
+                output_file_path = output_file_path[:-10]
+
             with open(output_file_path, "wb") as output_file:
                 output_file.write(plaintext)
 

@@ -45,7 +45,7 @@ class Ui_MainWindow(object):
         self.widget_2.setMinimumSize(QtCore.QSize(0, 30))
         self.widget_2.setObjectName("widget_2")
         self.file_browse_button = QtWidgets.QPushButton(self.widget_2)
-        self.file_browse_button.setGeometry(QtCore.QRect(611, -2, 140, 33))
+        self.file_browse_button.setGeometry(QtCore.QRect(611, -1, 140, 31))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/newPrefix/upload.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.file_browse_button.setIcon(icon)
