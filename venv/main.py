@@ -2,7 +2,9 @@ import sys
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QApplication , QFileDialog
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QProgressDialog
+from PyQt5.QtCore import Qt
+
 
 
 from katan import KATAN
@@ -140,7 +142,6 @@ class MainWindow(QMainWindow):
                 self.selected_file_path = selected_files[0]
                 self.ui.encryptdecrypt_file.setText(self.selected_file_path)
 
-
     def encrypt_file(self):
         try:
             if not self.selected_file_path:
@@ -160,7 +161,20 @@ class MainWindow(QMainWindow):
             key = int(clef_text, 16)
 
             katan = KATAN(key, variant)
-            ciphertext = katan.encrypt_file(self.selected_file_path)
+
+            progress = QProgressDialog("Chiffrement en cours...", "Annuler", 0, 100, self)
+            progress.setWindowModality(Qt.WindowModal)
+            progress.setWindowTitle("Progression")
+
+            def update_progress(value):
+                progress.setValue(value)
+                QApplication.processEvents()
+
+            ciphertext = katan.encrypt_file(self.selected_file_path, update_progress)
+
+            if progress.wasCanceled():
+                self.ui.result_output.setPlainText("Chiffrement annulé.")
+                return
 
             output_file_path = self.selected_file_path + ".encrypted"
             with open(output_file_path, "wb") as output_file:
@@ -189,9 +203,22 @@ class MainWindow(QMainWindow):
             key = int(clef_text, 16)
 
             katan = KATAN(key, variant)
-            plaintext = katan.decrypt_file(self.selected_file_path)
 
-            output_file_path = self.selected_file_path.rsplit('.txt', 1)[0]
+            progress = QProgressDialog("Déchiffrement en cours...", "Annuler", 0, 100, self)
+            progress.setWindowModality(Qt.WindowModal)
+            progress.setWindowTitle("Progression")
+
+            def update_progress(value):
+                progress.setValue(value)
+                QApplication.processEvents()
+
+            plaintext = katan.decrypt_file(self.selected_file_path, update_progress)
+
+            if progress.wasCanceled():
+                self.ui.result_output.setPlainText("Déchiffrement annulé.")
+                return
+
+            output_file_path = self.selected_file_path.rsplit('.', 1)[0]
             if output_file_path.endswith('.encrypted'):
                 output_file_path = output_file_path[:-10]
 
@@ -201,7 +228,6 @@ class MainWindow(QMainWindow):
             self.ui.result_output.setPlainText(f"Fichier déchiffré enregistré sous : {output_file_path}")
         except Exception as e:
             QMessageBox.critical(self, "Erreur", f"Une erreur est survenue lors du déchiffrement : {str(e)}")
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
