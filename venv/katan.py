@@ -75,9 +75,6 @@ class KATAN:
         return result & 1
 
 
-
-
-
     def encrypt_file(self, file_path):
         try:
             with open(file_path, 'rb') as input_file:
