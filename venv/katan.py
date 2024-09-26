@@ -74,27 +74,9 @@ class KATAN:
             result ^= x >> positions[5]
         return result & 1
 
-    def encrypt_file1(self, file_path):
-        try:
-            with open(file_path, 'rb') as input_file:
-                plaintext = int.from_bytes(input_file.read(), byteorder='big')
 
-            ciphertext = self.encrypt(plaintext)
-            return ciphertext.to_bytes((ciphertext.bit_length() + 7) // 8, byteorder='big')
 
-        except Exception as e:
-            raise Exception(f"Erreur lors du chiffrement du fichier : {str(e)}")
 
-    def decrypt_file1(self, file_path):
-        try:
-            with open(file_path, 'rb') as input_file:
-                ciphertext = int.from_bytes(input_file.read(), byteorder='big')
-
-            plaintext = self.decrypt(ciphertext)
-            return plaintext.to_bytes((plaintext.bit_length() + 7) // 8, byteorder='big')
-
-        except Exception as e:
-            raise Exception(f"Erreur lors du déchiffrement du fichier : {str(e)}")
 
     def encrypt_file(self, file_path):
         try:
