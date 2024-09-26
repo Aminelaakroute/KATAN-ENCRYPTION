@@ -28,8 +28,13 @@ The project consists of two main components:
 1. Clone the repository:
    ```
    git clone https://github.com/Aminelaakroute/KATAN-ENCRYPTION.git
+   cd KATAN-ENCRYPTION
    ```
-2. Install the required dependencies:
+2. Open KATAN-ENCRYPTION directory:
+   ```
+   cd KATAN-ENCRYPTION
+   ```
+3. Install the required dependencies:
    ```
    pip install PyQt5
    ```
