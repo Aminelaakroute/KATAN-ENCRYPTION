@@ -1,5 +1,7 @@
 from PyQt5.QtWidgets import QProgressDialog
 from PyQt5.QtCore import Qt
+import os
+import textwrap
 
 class KATAN:
     def __init__(self, key, variant):
@@ -77,7 +79,7 @@ class KATAN:
             result ^= x >> positions[5]
         return result & 1
 
-    def encrypt_file(self, file_path, progress_callback=None):
+    def encrypt_file(self, file_path, progress_callback=None, cancel_callback=None):
         try:
             with open(file_path, 'rb') as input_file:
                 plaintext = input_file.read()
@@ -93,6 +95,10 @@ class KATAN:
             encrypted_blocks = []
             total_blocks = len(blocks)
             for i, block in enumerate(blocks):
+                # Check if the operation has been canceled
+                if cancel_callback and cancel_callback():
+                    return None  # Return None or handle the cancellation as needed
+
                 encrypted_blocks.append(self.encrypt(block))
                 if progress_callback:
                     progress_callback(int((i + 1) / total_blocks * 100))
@@ -104,7 +110,7 @@ class KATAN:
         except Exception as e:
             raise Exception(f"Erreur lors du chiffrement du fichier : {str(e)}")
 
-    def decrypt_file(self, file_path, progress_callback=None):
+    def decrypt_file(self, file_path, progress_callback=None,cancel_callback=None):
         try:
             with open(file_path, 'rb') as input_file:
                 ciphertext = input_file.read()
@@ -116,6 +122,11 @@ class KATAN:
             decrypted_blocks = []
             total_blocks = len(blocks)
             for i, block in enumerate(blocks):
+
+                # Check if the operation has been canceled
+                if cancel_callback and cancel_callback():
+                    return None  # Return None or handle the cancellation as needed
+
                 decrypted_blocks.append(self.decrypt(block))
                 if progress_callback:
                     progress_callback(int((i + 1) / total_blocks * 100))
@@ -127,3 +138,18 @@ class KATAN:
 
         except Exception as e:
             raise Exception(f"Erreur lors du déchiffrement du fichier : {str(e)}")
+
+    def encrypt_text(self, plaintext):
+        block_size = self.block_size // 8  # Taille du bloc en octets
+        padded_text = plaintext.encode('utf-8').ljust(
+            len(plaintext) + (block_size - len(plaintext) % block_size) % block_size, b'\0')
+        blocks = textwrap.wrap(padded_text.hex(), block_size * 2)
+        encrypted_blocks = [hex(self.encrypt(int(block, 16)))[2:].zfill(block_size * 2) for block in blocks]
+        return ''.join(encrypted_blocks)
+
+    def decrypt_text(self, ciphertext):
+        block_size = self.block_size // 8  # Taille du bloc en octets
+        blocks = textwrap.wrap(ciphertext, block_size * 2)
+        decrypted_blocks = [hex(self.decrypt(int(block, 16)))[2:].zfill(block_size * 2) for block in blocks]
+        decrypted_text = bytes.fromhex(''.join(decrypted_blocks)).decode('utf-8').rstrip('\0')
+        return decrypted_text

@@ -50,7 +50,7 @@ python main.py
 In the GUI:
 
 Encryption for plain text
-1. Enter the plaintext or ciphertext in hexadecimal format
+1. Enter the plaintext or ciphertext 
 2. Enter the 80-bit key in hexadecimal format
 3. Select the KATAN variant (32, 48, or 64 bits)
 4. Click "Encrypt" or "Decrypt" as needed

@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
         self.ui.decrypterfile_button.clicked.connect(self.decrypt_file)
 
         self.ui.encryptdecrypt_file.setPlaceholderText("Veuillez sélectionner un fichier")
-        self.ui.plaintext_input.setPlaceholderText("Entrer le text en claire (en hexadécimal) et respecter le nombre des bits de la variante KATAN choisie")
+        self.ui.plaintext_input.setPlaceholderText("Entrez le texte en clair si vous voulez chiffrer un texte. \n\nEntrez le texte chiffré si vous voulez déchiffrer un texte")
         self.ui.clef_input.setPlaceholderText("Clef de Sécurité 80 Bits exp: 0x+20 caractères ")
 
 
@@ -56,21 +56,24 @@ class MainWindow(QMainWindow):
         else:
             return None
 
+
+
     def encrypt(self):
         try:
-            # Vérifier si le champ du ciphertext est vide
-            ciphertext_text = self.ui.plaintext_input.toPlainText().strip()
-            if not ciphertext_text:
+            plaintext = self.ui.plaintext_input.toPlainText().strip()
+            if not plaintext:
                 self.show_warning("Veuillez saisir le texte en clair.")
                 return
 
-            # Vérifier si le champ de la clé est vide
-            clef_text = self.ui.clef_input.text().strip()  # .strip() supprime les espaces inutiles
+            clef_text = self.ui.clef_input.text().strip()
             if not clef_text:
                 self.show_warning("Veuillez saisir une clé de sécurité.")
                 return
 
-            # Conversion de la clé en entier en base hexadécimale
+            if len(clef_text) != 20:  # 80 bits = 20 caractères hexadécimaux
+                self.show_warning("La clé doit être de 80 bits (20 caractères hexadécimaux).")
+                return
+
             key = int(clef_text, 16)
             variant = self.get_variant()
 
@@ -78,36 +81,33 @@ class MainWindow(QMainWindow):
                 self.show_radio_warning("Aucun variant sélectionné. Veuillez choisir une base (32, 48 ou 64).")
                 return
 
-            plaintext = int(self.ui.plaintext_input.toPlainText(), 16)
-
-            max_value = (1 << variant) - 1
-            if plaintext > max_value:
-                self.show_input_warning(variant, plaintext)
-                return
-
             katan = KATAN(key, variant)
-            ciphertext = katan.encrypt(plaintext)
+            ciphertext = katan.encrypt_text(plaintext)
 
-            self.ui.result_output.setPlainText(hex(ciphertext))
+            self.ui.result_output.setPlainText(ciphertext)
 
-        except ValueError as e:
-            QMessageBox.critical(self, "Erreur", "Entrée invalide. Assurez-vous d'entrer des valeurs hexadécimales valides.")
+        except ValueError:
+            QMessageBox.critical(self, "Erreur",
+                                 "Entrée invalide. Assurez-vous que la clé est une valeur hexadécimale valide.")
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur", f"Une erreur s'est produite : {str(e)}")
 
     def decrypt(self):
         try:
-            # Vérifier si le champ du ciphertext est vide
-            ciphertext_text = self.ui.plaintext_input.toPlainText().strip()
-            if not ciphertext_text:
+            ciphertext = self.ui.plaintext_input.toPlainText().strip()
+            if not ciphertext:
                 self.show_warning("Veuillez saisir le texte chiffré.")
                 return
 
-            # Vérifier si le champ de la clé est vide
-            clef_text = self.ui.clef_input.text().strip()  # .strip() supprime les espaces inutiles
+            clef_text = self.ui.clef_input.text().strip()
             if not clef_text:
                 self.show_warning("Veuillez saisir une clé de sécurité.")
                 return
 
-            # Conversion de la clé en entier en base hexadécimale
+            if len(clef_text) != 20:  # 80 bits = 20 caractères hexadécimaux
+                self.show_warning("La clé doit être de 80 bits (20 caractères hexadécimaux).")
+                return
+
             key = int(clef_text, 16)
             variant = self.get_variant()
 
@@ -115,23 +115,24 @@ class MainWindow(QMainWindow):
                 self.show_radio_warning("Aucun variant sélectionné. Veuillez choisir une base (32, 48 ou 64).")
                 return
 
-            # Conversion du ciphertext en entier en base hexadécimale
-            ciphertext = int(ciphertext_text, 16)
-
-            max_value = (1 << variant) - 1
-            if ciphertext > max_value:
-                self.show_input_warning(variant, ciphertext)
-                return
-
-            # Déchiffrement avec KATAN
             katan = KATAN(key, variant)
-            plaintext = katan.decrypt(ciphertext)
 
-            # Afficher le texte déchiffré
-            self.ui.result_output.setPlainText(hex(plaintext))
+            try:
+                # Vérification de la cohérence du variant
+                block_size = variant // 8  # Taille du bloc en octets
+                if len(ciphertext) % (block_size * 2) != 0:
+                    raise ValueError("Longueur du texte chiffré incorrecte")
+                plaintext = katan.decrypt_text(ciphertext)
+                self.ui.result_output.setPlainText(plaintext)
+            except (UnicodeDecodeError, ValueError):
+                self.show_warning(f"Le texte chiffré ne correspond pas au variant sélectionné ({variant} bits). "
+                                  f"Assurez-vous d'utiliser le même variant que pour le chiffrement.")
 
-        except ValueError as e:
-            QMessageBox.critical(self, "Erreur", "Entrée invalide. Assurez-vous d'entrer des valeurs hexadécimales valides.")
+        except ValueError:
+            QMessageBox.critical(self, "Erreur",
+                                 "Entrée invalide. Assurez-vous que la clé et le texte chiffré sont des valeurs hexadécimales valides.")
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur", f"Une erreur s'est produite : {str(e)}")
 
     def select_file(self):
         file_dialog = QFileDialog()
@@ -170,7 +171,11 @@ class MainWindow(QMainWindow):
                 progress.setValue(value)
                 QApplication.processEvents()
 
-            ciphertext = katan.encrypt_file(self.selected_file_path, update_progress)
+            # Define cancel callback
+            def cancel_callback():
+                return progress.wasCanceled()
+
+            ciphertext = katan.encrypt_file(self.selected_file_path, update_progress, cancel_callback)
 
             if progress.wasCanceled():
                 self.ui.result_output.setPlainText("Chiffrement annulé.")
@@ -212,7 +217,11 @@ class MainWindow(QMainWindow):
                 progress.setValue(value)
                 QApplication.processEvents()
 
-            plaintext = katan.decrypt_file(self.selected_file_path, update_progress)
+            # Define cancel callback
+            def cancel_callback():
+                return progress.wasCanceled()
+
+            plaintext = katan.decrypt_file(self.selected_file_path, update_progress, cancel_callback)
 
             if progress.wasCanceled():
                 self.ui.result_output.setPlainText("Déchiffrement annulé.")
